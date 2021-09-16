@@ -79,14 +79,6 @@ def att_game_por_id():
     request_data = request.get_json()
     val = (request_data['nome'],request_data['dt_lanc'],request_data['estilo'],request_data['preco'],request_data['desconto'], request_data['id'],)
     return run_update_query(update_query, val, 'GAME')
-    
-@app.route('/delete_game', methods=['POST'])
-def deletar_game_por_id():
-    request_data = request.get_json()
-    game_id = request_data['game_id']
-    print('Request' + str(request.data))
-    delete_query = "DELETE FROM GAME WHERE id = \'"+str(game_id)+"\'"
-    return run_delete_query(delete_query,'GAME')
 
 @app.route('/desenvolvedoras', methods=['GET'])
 def obter_desenvolvedoras():
@@ -116,7 +108,7 @@ def att_desenvolvedora_cnpj():
     val = (request_data['nome_comercial'],request_data['nome_oficial'],request_data['login'],request_data['senha'], request_data['email'], request_data['site_oficial'],request_data['cnpj'])
     return run_update_query(update_query, val, 'DESENVOLVEDORA')
     
-@app.route('/delete_desenvolvedora', methods=['POST'])
+@app.route('/delete_desenvolvedora', methods=['DELETE'])
 def delete_desenvolvedora_cnpj():
     request_data = request.get_json()
     cnpj = request_data['cnpj']
@@ -126,16 +118,14 @@ def delete_desenvolvedora_cnpj():
     
 @app.route('/amigos', methods=['GET'])
 def obter_amizades():
-    request_data = request.get_json()
-    nickname = request_data['nickname']
-    select_query = "SELECT * FROM AMIGO WHERE nickname_1 = \'"+nickname+"\' OR nickname_2 = \ '"+nickname+"\'"
+    select_query = "SELECT * FROM AMIGO"
     return run_select_query(select_query)
     
 @app.route('/amigos_usuario', methods=['GET'])
 def obter_amizades_usuario():
     request_data = request.get_json()
     nickname = request_data['nickname']
-    select_query = "SELECT * FROM AMIGO WHERE nickname_1 = \'"+nickname+"\' OR nickname_2 = \ '"+nickname+"\'"
+    select_query = "SELECT AMIGO.nickname_2 FROM AMIGO LEFT JOIN USUARIO ON USUARIO.nickname = AMIGO.nickname_1  WHERE USUARIO.nickname = \'"+nickname+"\' UNION SELECT AMIGO.nickname_1 FROM AMIGO LEFT JOIN USUARIO ON USUARIO.nickname = AMIGO.nickname_2  WHERE USUARIO.nickname = \'"+nickname+"\'"
     return run_select_query(select_query)
     
 @app.route('/novo_amigo', methods=['POST'])
@@ -146,13 +136,13 @@ def add_amigo_usuario():
     val = (request_data['nickname_1'],request_data['nickname_2'])
     return run_insert_query(insert_query, val, 'AMIGO')
     
-@app.route('/deletar_amigo', methods=['POST'])
+@app.route('/deletar_amigo', methods=['DELETE'])
 def delete_amigo_usuario():
     request_data = request.get_json()
     nickname_1 = request_data['nickname_1']
     nickname_2 = request_data['nickname_2']
     print('Request' + str(request.data))
-    delete_query = "DELETE FROM AMIGO WHERE nickname_1 = \'"+nickname_1+"\' AND nickname_2 = \ '"+nickname_2+"\'"
+    delete_query = "DELETE FROM AMIGO WHERE nickname_1 = \'"+nickname_1+"\' AND nickname_2 = \'"+nickname_2+"\'"
     return run_delete_query(delete_query,'AMIGO')
     
 @app.route('/aquisicoes', methods=['GET'])
@@ -162,29 +152,31 @@ def obter_aquisicoes():
     
 @app.route('/aquisicoes_usuario', methods=['GET'])
 def obter_aquisicoes_usuario():
+    request_data = request.get_json()
+    nickname = request_data['nickname']
     select_query = "SELECT * FROM ADQUIRE WHERE nickname = \'"+nickname+"\'"
     return run_select_query(select_query)
     
 @app.route('/nova_aquisicao', methods=['POST'])
 def add_aquisicao_usuario():
     print('Request' + str(request.data))
-    insert_query = """INSERT INTO ADQUIRE (nickname, id_game,cod_chave,comentario,nota) VALUES (%s, %s, %s, %s, %s, %s)"""
+    insert_query = """INSERT INTO ADQUIRE (nickname,id_game,cod_chave,comentario,nota) VALUES (%s, %s, %s, %s, %s)"""
     request_data = request.get_json()
     val = (request_data['nickname'],request_data['game_id'],request_data['cod_chave'],request_data['comentario'],request_data['nota'])
     game_id = request_data['game_id']
     update_query = "UPDATE GAME SET chaves_vendidas = chaves_vendidas + 1 WHERE id = \'"+str(game_id)+"\'"
-    run_update_query(update_query,'GAMES')
-    return run_insert_query(insert_query, val, 'ADQUIRE')
+    run_update_query(update_query,None,'GAME')
+    return run_insert_query(insert_query,val,'ADQUIRE')
     
-@app.route('/desfazer_aquisicao', methods=['POST'])
+@app.route('/desfazer_aquisicao', methods=['DELETE'])
 def desfazer_aquisicao():
     request_data = request.get_json()
     nickname = request_data['nickname']
     game_id= request_data['game_id']
     print('Request' + str(request.data))
-    delete_query = "DELETE FROM ADQUIRE WHERE nickname = \'"+nickname+"\' AND id_game = \ '"+str(game_id)+"\'"
-    update_query = "UPDATE GAME SET chaves_vendidas = chaves_vendidas - 1 WHERE id = \'"+str(game_id)+"\'"
-    run_update_query(update_query,'GAMES')
+    delete_query = "DELETE FROM ADQUIRE WHERE nickname = \'"+nickname+"\' AND id_game = \'"+str(game_id)+"\'"
+    update_query = "UPDATE GAME SET chaves_vendidas = chaves_vendidas + 1 WHERE id = \'"+str(game_id)+"\'"
+    run_update_query(update_query,None,'GAME')
     return run_delete_query(delete_query,'ADQUIRE')
     
 @app.route('/games_gratis', methods=['GET'])
@@ -199,14 +191,14 @@ def obter_games_promocoes():
     
 @app.route('/games_mais_vendidos', methods=['GET'])
 def obter_games_mais_vendidos():
-    select_query = "SELECT * FROM GAME ORDER BY chaves_vendidas"
+    select_query = "SELECT * FROM GAME ORDER BY chaves_vendidas DESC"
     return run_select_query(select_query)
     
 @app.route('/games_mais_vendidos_estilo', methods=['GET'])
 def obter_games_mais_vendidos_estilo():
     request_data = request.get_json()
     estilo = request_data['estilo']
-    select_query = "SELECT * FROM GAME ORDER BY chaves_vendidas WHERE estilo = \'"+estilo+"\'"
+    select_query = "SELECT * FROM GAME WHERE estilo = \'"+estilo+"\' ORDER BY chaves_vendidas"
     return run_select_query(select_query)
     
 @app.route('/games_desenvolvedora', methods=['POST'])

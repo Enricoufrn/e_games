@@ -24,6 +24,7 @@ insert into GAME(nome,dt_lanc,estilo,preco,desconto,chaves_vendidas,cnpj_desenvo
 insert into AMIGO(nickname_1,nickname_2) values
 ('anagamer','mariagamer'),
 ('anagamer','pedrogamer'),
+('mariagamer','anagamer'),
 ('anagamer','MateuzinUmaBala'),
 ('zezinhoMatador','MateuzinUmaBala'),
 ('zezinhoMatador','pedrogamer');
