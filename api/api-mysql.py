@@ -179,6 +179,11 @@ def desfazer_aquisicao():
     run_update_query(update_query,None,'GAME')
     return run_delete_query(delete_query,'ADQUIRE')
     
+@app.route('/games_notas', methods=['GET'])
+def obter_games_notas():
+    select_query = "SELECT GAME.nome ,AVG(ADQUIRE.nota) FROM GAME, ADQUIRE WHERE GAME.id = ADQUIRE.id_game GROUP BY GAME.nome;"
+    return run_select_query(select_query)
+    
 @app.route('/games_gratis', methods=['GET'])
 def obter_games_gratis():
     select_query = "SELECT * FROM GAME WHERE preco = 0"
